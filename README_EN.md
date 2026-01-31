@@ -109,16 +109,6 @@ uv run text2srt.py -t text.txt -a audio.mp3 -m intelligent
 - Maintains semantic integrity
 - Suitable for standard subtitle production
 
-### 2. Custom Punctuation Splitting
-
-```bash
-uv run text2srt.py -t text.txt -a audio.mp3 -m punctuation -p ".!?"
-```
-
-- Splits by specified punctuation
-- Customizable splitting granularity
-- Suitable for special requirements
-
 ## 📁 Output File Description
 
 ### Auto Naming Rules
@@ -251,43 +241,52 @@ uv run text2srt.py -t "Test text" -a 1-1.mp3 -y
    ```
    [ERROR] Cannot load model
    ```
+
    Solution: Check CUDA and GPU memory
 2. **Unsupported Audio File**
 
    ```
    [ERROR] Audio file does not exist
    ```
+
    Solution: Check file path and format
 3. **Text Reading Failed**
 
    ```
    [ERROR] Failed to read file
    ```
+
    Solution: Ensure text file uses UTF-8 encoding
 4. **Output Directory Permissions**
 
    ```
    [ERROR] Cannot create output directory
    ```
-   Solution: Check directory permissions or choose another directory
 
+   Solution: Check directory permissions or choose another directory
 
 ## 🤖 Open Source Projects
 
 ### 1. Core Engine
+
 **Qwen3-ASR**: https://github.com/QwenLM/Qwen3-ASR
+
 - Audio-text forced alignment engine
 - Supports multiple language precise timestamp extraction
 - Provides high-quality word-level timestamp alignment
 
 ### 2. Model Files
+
 **Qwen3-ForcedAligner-0.6B**: https://huggingface.co/Qwen/Qwen3-ForcedAligner-0.6B
+
 - High-performance forced alignment model
 - Supports Japanese, Chinese, English and multiple languages
 - Provides accurate word-level timestamp to second precision
 
 ### 3. Model Ecosystem
+
 **Hugging Face Qwen**: https://huggingface.co/Qwen
+
 - Complete ecosystem of Qwen series models and resources
 - Provides model download, configuration and usage guides
 - Comprehensive model library and community support
@@ -295,6 +294,7 @@ uv run text2srt.py -t "Test text" -a 1-1.mp3 -y
 ## ⚙️ Model Configuration
 
 The project uses the following model configuration:
+
 ```json
 {
   "model": "Qwen/Qwen3-ForcedAligner-0.6B",
