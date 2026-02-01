@@ -1,393 +1,167 @@
-# オーディオとテキストの強制アライメントツール
+# 音声テキスト強制アライメントツール
 
 ## 🌐 言語 / Language
 
 [🇨🇳 中文](README.md) | [🇺🇸 English](README_EN.md) | [🇯🇵 日本語](README_JA.md)
 
-## 📋 プロジェクト概要
+Qwen3-ForcedAligner ベースのインテリジェントメディアファイルタイムスタンプ処理ツール。テキストと動画・音声ファイルのタイムスタンプ自動マッチングをサポートし、正確な単語レベルと文レベルの字幕を生成します。
 
-このプロジェクトは、オーディオファイルと対応するテキストを正確に整列させ、字幕ファイルを生成する柔軟なテキストタイムスタンプ処理解決を提供します。直接テキスト入力またはテキストファイルからの読み取りをサポートし、出力ファイルはオーディオファイル名に基づいて自動的に命名されます。
+## 🌟 主な機能
 
-## 🗂 核心ファイル
+- ✅ **マルチフォーマット対応**：音声ファイル (.mp3, .wav, .m4a, .aac, .ogg, .flac) と動画ファイル (.mp4, .avi, .mov, .mkv, .flv, .wmv, .webm)
+- ✅ **スマートテキスト分割**：カスタム句読点によるテキスト分割をサポート
+- ✅ **マルチフォーマット出力**：JSON、単語レベルSRT、文レベルSRTファイルを生成
 
-### 主要プログラム
+## 📦 依存関係のインストール
 
-- **`flexible_processor.py`** - 核心プロセッサクラス
-- **`text2srt.py`** - CLIコマンドラインツール
+```bash
+# コア依存関係のインストール
+pip install torch qwen-asr
 
-## 🎯 機能特性
-
-### 1. 句読点記号テキスト入力（デフォルト）
-
-- ✅ **直接テキスト文字列入力**
-- ✅ **テキストファイルパスからの読み取り**
-
-### 2. スマートファイル命名
-
-- ✅ **オーディオファイル名による出力の自動命名**
-- ✅ **カスタム出力ファイル名のサポート**
-
-### 3. CLIコマンドラインツール
-
-- ✅ **完全なコマンドラインインターフェース**
-- ✅ **すべてのプロセッサ機能のサポート**
-- ✅ **柔軟なパラメータ設定**
+# オプション：動画処理用にFFmpegをインストール
+# Windows: ダウンロードしてインストール https://ffmpeg.org/download.html
+# macOS: brew install ffmpeg
+# Ubuntu: sudo apt-get install ffmpeg
+```
 
 ## 🚀 クイックスタート
 
-### CLIツール使用（推奨）
-
-> 💡 **多言語サポート**：このプロジェクトは [🇺🇸 English](README_EN.md) と [🇯🇵 日本語](README_JA.md) ドキュメントをサポートします
-
-#### 基本使い方
+### 1. コマンドライン使用（仮想環境の使用を推奨）
 
 ```bash
-# 直接テキスト入力（オーディオファイル所在ディレクトリへ出力）
-uv run text2srt.py -t "これはテストテキストです。2つの文を含んでいます！" -a 1-1.mp3
+# 音声ファイルの処理
+uv run text2srt.py -t "テキスト内容" -a audio.mp3
 
-# テキストファイルから読み取り
+# ファイルからテキストを読み込んで音声を処理
 uv run text2srt.py -t text.txt -a audio.mp3
 
-# 出力ディレクトリを指定
-uv run text2srt.py -t "テキスト内容" -a audio.mp3 -o ./output
-```
+# 動画ファイルの処理（自動で音声に変換）
+uv run text2srt.py -t "動画字幕テキスト" -v video.mp4
 
-#### 高度な使い方
-
-```bash
-# 句読点記号分割モードを使用
-uv run text2srt.py -t text.txt -a audio.mp3 -p "、。！？"
-
-# 言語をカスタマイズ
+# 言語を指定
 uv run text2srt.py -t text.txt -a audio.mp3 -l Japanese
-
-# 確認をスキップして直接処理
-uv run text2srt.py -t text.txt -a audio.mp3 -y
 ```
 
-### CLIパラメータ説明
-
-| パラメータ            | 説明                                   | 必須 | デフォルト                         |
-| --------------------- | -------------------------------------- | ---- | ---------------------------------- |
-| `-t, --text`        | テキスト内容またはテキストファイルパス | ✅   | -                                  |
-| `-a, --audio`       | オーディオファイルパス                 | ✅   | -                                  |
-| `-o, --output`      | 出力ディレクトリパス                   | ❌   | オーディオファイル所在ディレクトリ |
-| `-p, --punctuation` | カスタム分割句読点                     | ❌   | 、。！？                           |
-| `-l, --language`    | オーディオ言語                         | ❌   | Japanese                           |
-| `-y, --yes`         | 確認をスキップして直接処理             | ❌   | False                              |
-
-### Python API使用
+### 2. コード内での使用
 
 ```python
 from flexible_processor import FlexibleTextTimestampProcessor
 
-# プロセッサを作成
+# プロセッサーを作成
 processor = FlexibleTextTimestampProcessor()
 
-# テキストとオーディオを処理
+# 音声ファイルの処理
 result = processor.process(
-    text_input="あなたのテキスト内容",  # 直接テキスト入力
-    audio_path="1-1.mp3"        # オーディオファイル
+    text_input="テキスト内容",
+    audio_path="audio.mp3",
+    language="Japanese"
 )
 
-# 自動生成：
-# - 1-1.json (完全な結果)
-# - 1-1_word.srt (単語レベル字幕)
-# - 1-1_sentence.srt (文レベル字幕)
+# 動画ファイルの処理
+result = processor.process_media_file(
+    media_path="video.mp4",
+    text_input="動画字幕テキスト"
+)
+
+if result:
+    print(f"{len(result['output_files'])}個のファイルが生成されました")
+    print(f"マッチング率: {result['statistics']['matched_segments']}/{result['statistics']['total_segments']}")
 ```
 
-## 📖 分割モード
+## 📁 出力ファイル
 
-### 1. 句読点記号テキスト分割（推奨）
+処理完了後、3つのファイルが生成されます：
 
-これはデフォルトのモードです。
+- `{ファイル名}.json` - 完全なJSON結果データ
+- `{ファイル名}_word.srt` - 単語レベルSRT字幕（各単語を個別表示）
+- `{ファイル名}_sentence.srt` - 文レベルSRT字幕（文単位で表示）
 
-#### 使用例
+## 🔧 高度な設定
 
-```bash
-uv run text2srt.py -t text.txt -a audio.mp3
+### カスタム句読点による分割
+
+```python
+processor = FlexibleTextTimestampProcessor()
+processor.set_custom_punctuation("、。！？《》")  # カスタム分割句読点
 ```
 
-- ✅ **句読点記号による精密な分割**
-- ✅ **タイムスタンプマッチングがより正確**
-- ✅ **日本語、中国語、英語などのテキストに適している**
+### サポート言語
 
-### 2. カスタム句読点記号分割
+- Japanese (日本語), Chinese (中国語), English (英語), etc.
 
-カスタム句読点記号で分割粒度を調整できます。
+## 🎯 使用例
 
-#### 使用例
+### 基本例
 
-```bash
-# より詳細な分割
-uv run text2srt.py -t text.txt -a audio.mp3 -p "、。！？《》"
+```python
+from flexible_processor import FlexibleTextTimestampProcessor
 
-# 文末句読点記号のみで分割
-uv run text2srt.py -t text.txt -a audio.mp3 -p "。！？"
+# サンプルテキスト
+text = """世界で一番有名な富士山の絵、葛飾北斉。1998年にアメリカの雑誌《ライフ》がこの千年の間の世界のすごい人100人を選びました。"""
+
+# プロセッサー作成
+processor = FlexibleTextTimestampProcessor()
+
+# 処理実行
+result = processor.process(text, "audio.mp3")
+
+# 統計情報出力
+stats = result['statistics']
+print(f"セグメント数: {stats['total_segments']}")
+print(f"単語数: {stats['total_words']}")
+print(f"マッチング率: {stats['matched_segments']}/{stats['total_segments']}")
 ```
 
-## 📁 出力ファイル説明
+### 動画処理例
 
-### 自動命名ルール
+```python
+# 動画ファイル処理
+result = processor.process_media_file(
+    media_path="video.mp4",
+    text_input="動画対応テキスト内容"
+)
 
-- オーディオファイル：`1-1.mp3`
-- 出力ファイル：
-  - `1-1.json` - 完全な処理結果
-  - `1-1_word.srt` - 単語レベル字幕
-  - `1-1_sentence.srt` - 文レベル字幕
-
-### 出力ディレクトリの指定
-
-```bash
-uv run text2srt.py -t text.txt -a audio.mp3 -o ./results
-# 出力先：./results/1-1.json, ./results/1-1_word.srt, ./results/1-1_sentence.srt
+# 自動処理フロー：動画 → 音声 → タイムスタンプ → 字幕
 ```
 
-## 📊 出力フォーマット
+### バッチ処理例
 
-### JSON結果フォーマット
+```python
+import os
+from pathlib import Path
 
-```json
-{
-  "segments": [
-    {
-      "text": "テキスト内容",
-      "start_time": 0.96,
-      "end_time": 7.84,
-      "words": [...],
-      "match_score": 1.0
-    }
-  ],
-  "statistics": {
-    "total_segments": 10,
-    "total_words": 151,
-    "matched_segments": 10
-  },
-  "output_files": {
-    "json": "1-1.json",
-    "word_srt": "1-1_word.srt",
-    "sentence_srt": "1-1_sentence.srt"
-  }
-}
+# ディレクトリ内の全音声ファイルをバッチ処理
+audio_dir = Path("audio_files")
+text_dir = Path("text_files")
+
+for audio_file in audio_dir.glob("*.mp3"):
+    # 対応するテキストファイル
+    text_file = text_dir / f"{audio_file.stem}.txt"
+  
+    if text_file.exists():
+        result = processor.process_media_file(
+            media_path=str(audio_file),
+            text_input=str(text_file)
+        )
+        print(f"処理完了: {audio_file.name}")
 ```
-
-### SRTフォーマット
-
-- **単語レベルSRT**：各単語に1つのタイムスタンプ、精密な分析に適している
-- **文レベルSRT**：各文に1つのタイムスタンプ、通常の字幕に適している
-
-## 🚀 実行例
-
-```bash
-# Pythonサンプルを実行
-uv run flexible_processor.py
-
-# CLIヘルプを表示
-uv run text2srt.py --help
-
-# クイックテスト
-uv run text2srt.py -t "テストテキスト" -a 1-1.mp3 -y
-```
-
-## 📚 使用例
-
-### 1. ビデオ字幕作成
-
-```bash
-# 日本語のビデオに字幕を作成
-uv run text2srt.py -t "世界で一番有名な富士山の絵、葛飾北斉。" -a video_audio.mp3 -l Japanese -o ./subtitles
-
-# 英語の学習教材を作成
-uv run text2srt.py -t "This is a sentence for learning." -a lesson_audio.mp3 -l English -o ./learning_materials
-```
-
-### 2. ポッドキャストトランスクリプション
-
-```bash
-# 日本語のポッドキャストを文字起こし
-uv run text2srt.py -t podcast_script.txt -a podcast_audio.mp3 -l Japanese -o ./podcast_transcription
-
-# 中国語のトランスクリプション
-uv run text2srt.py -t 中文内容 -a chinese_audio.mp3 -l Chinese -o ./chinese_transcription
-```
-
-### 3. バッチ処理
-
-```bash
-# バッチ処理スクリプトの作成
-for audio in *.mp3; do
-  text_file="${audio%.mp3}.txt"
-  if [ -f "$text_file" ]; then
-    uv run text2srt.py -t "$text_file" -a "$audio" -y
-  fi
-done
-```
-
-### 4. 多言語処理
-
-```bash
-# 日本語テキスト
-uv run text2srt.py -t japanese.txt -a japanese_audio.mp3 -l Japanese -y
-
-# 中国語テキスト
-uv run text2srt.py -t chinese.txt -a chinese_audio.mp3 -l Chinese -y
-
-# 英語テキスト
-uv run text2srt.py -t english.txt -a english_audio.mp3 -l English -y
-```
-
-## 📚 JSON結果フォーマット
-
-```json
-{
-  "segments": [
-    {
-      "text": "テキスト内容",
-      "start_time": 0.96,
-      "end_time": 7.84,
-      "words": [
-        {
-          "text": "世界",
-          "start_time": 0.96,
-          "end_time": 1.52
-        }
-      ],
-      "match_score": 1.0,
-      "segment_type": "sentence"
-    }
-  ],
-  "statistics": {
-    "total_segments": 10,
-    "total_words": 151,
-    "matched_segments": 10,
-    "total_duration": 82.72,
-    "split_mode": "punctuation",
-    "punctuation_used": "、。！？"
-  },
-  "output_files": {
-    "json": "1-1.json",
-    "word_srt": "1-1_word.srt",
-    "sentence_srt": "1-1_sentence.srt"
-  },
-  "raw_data": {
-    "text_segments": [...],
-    "word_timestamps": [...]
-  }
-}
-```
-
-### SRTフォーマット
-
-- **単語レベルSRT**：各単語に正確なタイムスタンプ、精密な分析に適している
-- **文レベルSRT**：各文に適切なタイムスタンプ、通常の字幕に適している
-
-## ⚙️ 依存関係
-
-- Python 3.8+
-- PyTorch
-- qwen-asr
-- CUDA対応GPUおよびCPU
 
 ## ⚠️ 注意事項
 
-1. **ファイルエンコーディング**：テキストファイルはUTF-8エンコーディングを使用してください
-2. **オーディオフォーマット**：一般的なオーディオフォーマット（mp3, wav, m4aなど）をサポート
-3. **オーディオマッチング**：オーディオとテキスト内容が一致している必要があります
-4. **GPU要件**：CUDA対応GPUが推奨ですが、CPUもサポートされています
-5. **ファイル命名**：出力ファイルは自動生成されます、名前の競合を避けてください
+1. **モデルパス**：Qwen\Qwen3-ForcedAligner-0.6B
+2. **GPUサポート**：CUDAを自動検出、GPUがある場合に自動使用
+3. **音声品質**：クリアでバックグラウンドノイズのない音声または動画を推奨
+4. **テキストマッチング**：最高の効果を得るため、テキスト内容と音声内容が一致している必要があります
+5. **FFmpegパス**：FFmpegがシステムPATHにあることを確認（動画処理に必要）
 
-## 🎯 アプリケーションシーン
+## 📜 ライセンス
 
-- **ビデオ字幕作成** - 高精度な時間整列字幕の迅速生成
-- **言語学習教材** - タイムスタンプ付き学習教材の作成
-- **音声認識検証** - ASR結果の正確性の検証
-- **コンテンツ分析** - 音声コンテンツの詳細な分析
-- **ポッドキャストトランスクリプション** - ポッドキャスト用の字幕と索引の作成
-- **マルチメディア処理** - 複数言語でのテキスト処理対応
+MIT License
 
-## 🧧 トラブルシューティング
+## 🔗 関連リンク
 
-### 一般的な問題
-
-1. **モデル読み込み失敗**
-
-   ```
-   [ERROR] モデルを読み込めません
-   ```
-
-   解決策：CUDAとGPUメモリを確認
-2. **サポートされていないオーディオファイル**
-
-   ```
-   [ERROR] オーディオファイルが存在しません
-   ```
-
-   解決策：ファイルパスとフォーマットを確認
-3. **テキスト読み込み失敗**
-
-   ```
-   [ERROR] ファイルの読み込みに失敗しました
-   ```
-
-   解決策：テキストファイルがUTF-8エンコーディングを使用していることを確認
-4. **出力ディレクトリ権限**
-
-   ```
-   [ERROR] 出力ディレクトリを作成できません
-   ```
-
-   解決策：ディレクトリ権限を確認するか、他のディレクトリを選択
-
----
-
-## 🤖 オープンソースプロジェクトの引用
-
-### 1. コアエンジン
-
-**Qwen3-ASR**: https://github.com/QwenLM/Qwen3-ASR
-
-- オーディオとテキストの強制整列用エンジン
-- 複数言語の正確なタイムスタンプ抽出をサポート
-- 高品質な単語レベルタイムスタンプ整列を提供
-
-### 2. モデルファイル
-
-**Qwen3-ForcedAligner-0.6B**: https://huggingface.co/Qwen/Qwen3-ForcedAligner-0.6B
-
-- 高性能な強制整列モデル
-- 日本語、中国語、英語など複数言語をサポート
-- 秒精度な単語レベルタイムスタンプ整列を提供
-
-### 3. モデルエコシステム
-
-**Hugging Face Qwen**: https://huggingface.co/Qwen
-
-- Qwenシリーズの全モデルとリソースを含む
-- モデルのダウンロード、設定と使用ガイドを提供
-- 包括的なモデルライブラリとコミュニティサポート
-
-## ⚙️ モデル設定
-
-このプロジェクトでは、以下のモデル設定を使用しています：
-
-```json
-{
-  "model": "Qwen/Qwen3-ForcedAligner-0.6B",
-  "dtype": "bfloat16",
-  "device": "cuda:0"
-}
-```
-
-## 🏗️ 技術アーキテクチャ
-
-このプロジェクトは、Qwen3-ASRとQwen3-ForcedAligner-0.6Bを使用して構築されています：
-
-- **アーキテクチャ**: Transformerベースの強制整列
-- **精度**: 高精度な単語レベルタイムスタンプ整列
-- **言語サポート**: 日本語、中国語、英語などの複数言語
-- **入力形式**: オーディオファイル + 対応テキスト
-- **出力形式**: 単語レベル/文レベルタイムスタンプ + SRT字幕
-
----
-
-このプロジェクトは、使いやすいCLIツールと柔軟なPython APIを含む完全なテキストタイムスタンプ処理ソリューションを提供し、様々な字幕作成とオーディオ処理シーンに適しています。オープンソースのQwen3-ASRプロジェクトに基づき、優秀なQwen3-ForcedAligner-0.6Bモデルを活用して、複数言語をサポートする高品質なテキストタイムスタンプ処理ソリューションを提供します！🎉
+- 里官方开源プロジェクト             [Qwen3-ASR](https://github.com/QwenLM/Qwen3-ASR)
+- モデルダウンロード（huggingface）[Qwen3-ForcedAligner](https://huggingface.co/Qwen/Qwen3-ForcedAligner-0.6B)
+- モデルダウンロード（modelscope）[Qwen3-ForcedAligner](https://www.modelscope.cn/models/Qwen/Qwen3-ForcedAligner-0.6B)
+- [FFmpeg公式サイト](https://ffmpeg.org/)
+- [PyTorch](https://pytorch.org/)

@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-文本时间戳处理CLI工具（标点分割版）
+命令行版本的媒体文件时间戳处理工具
 """
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
@@ -13,120 +11,76 @@ from flexible_processor import FlexibleTextTimestampProcessor
 
 
 def main():
-    """主函数"""
-    parser = argparse.ArgumentParser(
-        description="文本时间戳处理CLI工具（标点分割版）",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
+    parser = argparse.ArgumentParser(description="媒体文件时间戳处理工具")
 
-    # 必需参数
-    parser.add_argument("-t", "--text", required=True, help="文本内容或文本文件路径")
-    parser.add_argument("-a", "--audio", required=True, help="音频文件路径")
-
-    # 可选参数
-    parser.add_argument("-o", "--output", help="输出目录路径（默认：音频文件所在目录）")
+    parser.add_argument("-t", "--text", help="文本内容或文本文件路径")
+    parser.add_argument("-a", "--audio", help="音频文件路径")
+    parser.add_argument("-v", "--video", help="视频文件路径（会自动转换为音频）")
     parser.add_argument(
-        "-p", "--punctuation", default="，?.,!、。！？", help="自定义分割标点"
+        "-l", "--language", default="Japanese", help="语言 (默认: Japanese)"
     )
-    parser.add_argument("-l", "--language", default="Japanese", help="音频语言")
-    parser.add_argument("-y", "--yes", action="store_true", help="跳过确认，直接处理")
 
     args = parser.parse_args()
 
-    print("=" * 60)
-    print("文本时间戳处理CLI工具（标点分割版）")
-    print("=" * 60)
-
-    # 检查音频文件
-    if not os.path.isfile(args.audio):
-        print(f"[ERROR] 音频文件不存在: {args.audio}")
+    # 参数验证
+    if not args.text:
+        print("请提供文本内容或文件路径 (-t)")
+        parser.print_help()
         sys.exit(1)
 
-    # 确定输出目录
-    if args.output:
-        output_dir = args.output
-    else:
-        output_dir = str(Path(args.audio).parent)
+    if not args.audio and not args.video:
+        print("请提供音频文件路径 (-a) 或视频文件路径 (-v)")
+        parser.print_help()
+        sys.exit(1)
 
-    # 创建输出目录
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    print(f"[INFO] 输出目录: {output_dir}")
+    if args.audio and args.video:
+        print("不能同时指定音频和视频文件")
+        sys.exit(1)
 
-    # 获取文本内容
-    if os.path.isfile(args.text):
-        print(f"[INFO] 从文件读取文本: {args.text}")
-        try:
-            with open(args.text, "r", encoding="utf-8") as f:
-                text = f.read()
-            print(f"[INFO] 文本读取完成，长度: {len(text)} 字符")
-        except Exception as e:
-            print(f"[ERROR] 读取文件失败: {e}")
-            sys.exit(1)
-    else:
-        text = args.text
-        print(f"[INFO] 使用直接输入文本，长度: {len(text)} 字符")
-
-    # 生成输出文件路径
-    audio_name = Path(args.audio).stem
-    json_output = os.path.join(output_dir, f"{audio_name}.json")
-    word_srt_output = os.path.join(output_dir, f"{audio_name}_word.srt")
-    sentence_srt_output = os.path.join(output_dir, f"{audio_name}_sentence.srt")
-
-    print(f"[INFO] 预期输出文件:")
-    print(f"   JSON: {json_output}")
-    print(f"   字词级SRT: {word_srt_output}")
-    print(f"   句级SRT: {sentence_srt_output}")
-    print(f"[INFO] 分割模式: 标点分割")
-    print(f"[INFO] 使用标点: {args.punctuation}")
-    print(f"[INFO] 音频语言: {args.language}")
-    print()
-
-    # 确认继续
-    if not args.yes:
-        response = input("是否继续处理？(Y/n): ").strip().lower()
-        if response and response != "y":
-            print("[INFO] 用户取消操作")
-            sys.exit(0)
+    # 创建处理器
+    processor = FlexibleTextTimestampProcessor()
 
     try:
-        print("[INFO] 开始处理...")
+        print("开始处理...")
 
-        # 创建处理器
-        processor = FlexibleTextTimestampProcessor()
+        if args.video:
+            # 处理视频文件
+            if not Path(args.video).exists():
+                print(f"视频文件不存在: {args.video}")
+                sys.exit(1)
 
-        # 设置分割标点
-        processor.set_custom_punctuation(args.punctuation)
+            print(f"检测到视频文件: {args.video}")
+            result = processor.process_media_file(
+                media_path=args.video, text_input=args.text
+            )
+        else:
+            # 处理音频文件
+            if not Path(args.audio).exists():
+                print(f"音频文件不存在: {args.audio}")
+                sys.exit(1)
 
-        # 执行处理
-        result = processor.process(
-            text_input=text,
-            audio_path=args.audio,
-            language=args.language,
-            json_output=json_output,
-            word_srt_output=word_srt_output,
-            sentence_srt_output=sentence_srt_output,
-        )
+            result = processor.process(
+                text_input=args.text, audio_path=args.audio, language=args.language
+            )
 
-        print()
-        print("=" * 60)
-        print("[SUCCESS] 处理完成！")
-        print("=" * 60)
-        print(f"[STATISTICS] 处理统计:")
-        print(f"   文本段数: {result['statistics']['total_segments']}")
-        print(f"   字词数量: {result['statistics']['total_words']}")
-        print(f"   匹配段数: {result['statistics']['matched_segments']}")
-        print()
-        print(f"[OUTPUT] 输出文件:")
-        print(f"   {json_output}")
-        print(f"   {word_srt_output}")
-        print(f"   {sentence_srt_output}")
+        if result:
+            output_files = result["output_files"]
+            stats = result["statistics"]
 
-    except KeyboardInterrupt:
-        print("\n[ERROR] 用户中断处理")
-        sys.exit(1)
+            print("\n✅ 处理成功!")
+            print(f"生成文件: {len(output_files)} 个")
+            for file_type, file_path in output_files.items():
+                print(f"  - {file_type}: {file_path}")
+
+            print(f"\n统计信息:")
+            print(f"  - 段落数: {stats['total_segments']}")
+            print(f"  - 词数: {stats['total_words']}")
+            print(f"  - 匹配率: {stats['matched_segments']}/{stats['total_segments']}")
+        else:
+            print("❌ 处理失败")
+
     except Exception as e:
-        print(f"\n[ERROR] 处理失败: {e}")
-        sys.exit(1)
+        print(f"❌ 错误: {e}")
 
 
 if __name__ == "__main__":

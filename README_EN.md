@@ -1,83 +1,48 @@
-# Audio and text forced alignment tool
+# Audio-Text Forced Alignment Tool
 
-## 🌐 Language / 言語
+## 🌐 Language / 语言
 
 [🇨🇳 中文](README.md) | [🇺🇸 English](README_EN.md) | [🇯🇵 日本語](README_JA.md)
 
-## Project Overview
+An intelligent media file timestamp processing tool based on Qwen3-ForcedAligner. Supports automatic timestamp matching between text and video/audio files, generating accurate word-level and sentence-level subtitles.
 
-This project provides a flexible text timestamp processing solution that can precisely align audio files with corresponding text to generate subtitle files. It supports direct text input or reading from text files, with output files automatically named according to the audio filename.
+## 🌟 Key Features
 
-## Core Files
+- ✅ **Multi-format Support**: Audio files (.mp3, .wav, .m4a, .aac, .ogg, .flac) and video files (.mp4, .avi, .mov, .mkv, .flv, .wmv, .webm)
+- ✅ **Smart Text Splitting**: Support custom punctuation for text segmentation
+- ✅ **Multi-format Output**: Generate JSON, word-level SRT, sentence-level SRT files
 
-### Main Programs
+## 📦 Install Dependencies
 
-- **`flexible_processor.py`** - Core processor class
-- **`text2srt.py`** - CLI command line tool
+```bash
+# Install core dependencies
+pip install torch qwen-asr
 
-## 🎯 Features
-
-### 1. Flexible Text Input
-
-- ✅ **Direct text string input**
-- ✅ **Read from text file path**
-
-### 2. Smart File Naming
-
-- ✅ **Auto-name outputs by audio filename**
-- ✅ **Support custom output filenames**
-
-### 3. CLI Command Line Tool
-
-- ✅ **Complete command line interface**
-- ✅ **Support all processor features**
-- ✅ **Flexible parameter configuration**
+# Optional: Install FFmpeg for video processing
+# Windows: Download and install https://ffmpeg.org/download.html
+# macOS: brew install ffmpeg
+# Ubuntu: sudo apt-get install ffmpeg
+```
 
 ## 🚀 Quick Start
 
-### CLI Tool Usage (Recommended)
-
-> 💡 **Multi-language Support**: This project supports [🇨🇳 Chinese](README.md) and [🇯🇵 日本語](README_JA.md) documentation
-
-#### Basic Usage
+### 1. Command Line Usage (virtual environment recommended)
 
 ```bash
-# Direct text input (output to audio file directory)
-uv run text2srt.py -t "This is test text. Contains two sentences!" -a 1-1.mp3
+# Process audio file
+uv run text2srt.py -t "Your text content" -a audio.mp3
 
-# Read from text file
+# Read text from file and process audio
 uv run text2srt.py -t text.txt -a audio.mp3
 
-# Specify output directory
-uv run text2srt.py -t "Text content" -a audio.mp3 -o ./output
+# Process video file (automatically convert to audio)
+uv run text2srt.py -t "Video subtitle text" -v video.mp4
+
+# Specify language
+uv run text2srt.py -t text.txt -a audio.mp3 -l Japanese
 ```
 
-#### Advanced Usage
-
-```bash
-# Use punctuation splitting mode
-uv run text2srt.py -t text.txt -a audio.mp3 -m punctuation -p ".,!?"
-
-# Custom language
-uv run text2srt.py -t text.txt -a audio.mp3 -l English
-
-# Skip confirmation and process directly
-uv run text2srt.py -t text.txt -a audio.mp3 -y
-```
-
-### CLI Parameter Description
-
-| Parameter             | Description                              | Required | Default              |
-| --------------------- | ---------------------------------------- | -------- | -------------------- |
-| `-t, --text`        | Text content or text file path           | ✅       | -                    |
-| `-a, --audio`       | Audio file path                          | ✅       | -                    |
-| `-o, --output`      | Output directory path                    | ❌       | Audio file directory |
-| `-m, --mode`        | Splitting mode (intelligent/punctuation) | ❌       | intelligent          |
-| `-p, --punctuation` | Custom splitting punctuation             | ❌       | 、。！？             |
-| `-l, --language`    | Audio language                           | ❌       | Japanese             |
-| `-y, --yes`         | Skip confirmation and process directly   | ❌       | False                |
-
-### Python API Usage
+### 2. Usage in Code
 
 ```python
 from flexible_processor import FlexibleTextTimestampProcessor
@@ -85,234 +50,118 @@ from flexible_processor import FlexibleTextTimestampProcessor
 # Create processor
 processor = FlexibleTextTimestampProcessor()
 
-# Process text and audio
+# Process audio file
 result = processor.process(
-    text_input="Your text content",  # Direct text input
-    audio_path="1-1.mp3"           # Audio file
+    text_input="Your text content",
+    audio_path="audio.mp3",
+    language="Japanese"
 )
 
-# Automatically generated:
-# - 1-1.json (complete results)
-# - 1-1_word.srt (word-level subtitles)
-# - 1-1_sentence.srt (sentence-level subtitles)
+# Process video file
+result = processor.process_media_file(
+    media_path="video.mp4",
+    text_input="Video subtitle text"
+)
+
+if result:
+    print(f"Generated {len(result['output_files'])} files")
+    print(f"Matching rate: {result['statistics']['matched_segments']}/{result['statistics']['total_segments']}")
 ```
 
-## 📖 Splitting Modes
+## 📁 Output Files
 
-### 1. Intelligent Splitting (Recommended)
+After processing completion, three files will be generated:
 
-```bash
-uv run text2srt.py -t text.txt -a audio.mp3 -m intelligent
+- `{filename}.json` - Complete JSON result data
+- `{filename}_word.srt` - Word-level SRT subtitles (each word displayed separately)
+- `{filename}_sentence.srt` - Sentence-level SRT subtitles (displayed by sentence)
+
+## 🔧 Advanced Configuration
+
+### Custom Punctuation Splitting
+
+```python
+processor = FlexibleTextTimestampProcessor()
+processor.set_custom_punctuation("、。！？《》")  # Custom splitting punctuation
 ```
 
-- Splits by semantic sentences
-- Maintains semantic integrity
-- Suitable for standard subtitle production
+### Supported Languages
 
-## 📁 Output File Description
+- Japanese (日本語), Chinese (中文), English (英语), etc.
 
-### Auto Naming Rules
+## 🎯 Usage Examples
 
-- Audio file: `1-1.mp3`
-- Output files:
-  - `1-1.json` - Complete processing results
-  - `1-1_word.srt` - Word-level subtitles
-  - `1-1_sentence.srt` - Sentence-level subtitles
+### Basic Example
 
-### Specify Output Directory
+```python
+from flexible_processor import FlexibleTextTimestampProcessor
 
-```bash
-uv run text2srt.py -t text.txt -a audio.mp3 -o ./results
-# Output to: ./results/1-1.json, ./results/1-1_word.srt, ./results/1-1_sentence.srt
+# Sample text
+text = """世界で一番有名な富士山の絵、葛飾北斉。1998年にアメリカの雑誌《ライフ》がこの千年の間の世界のすごい人100人を選びました。"""
+
+# Create processor
+processor = FlexibleTextTimestampProcessor()
+
+# Process
+result = processor.process(text, "audio.mp3")
+
+# Output statistics
+stats = result['statistics']
+print(f"Segments: {stats['total_segments']}")
+print(f"Words: {stats['total_words']}")
+print(f"Matching rate: {stats['matched_segments']}/{stats['total_segments']}")
 ```
 
-## 💡 Usage Examples
+### Video Processing Example
 
-### 1. Video Subtitle Production
+```python
+# Process video file
+result = processor.process_media_file(
+    media_path="video.mp4",
+    text_input="Video corresponding text content"
+)
 
-```bash
-# Create subtitles for video
-uv run text2srt.py -t video_script.txt -a video_audio.mp3 -o ./subtitles
-
-# Create learning materials
-uv run text2srt.py -t "The weather is nice today. Let's go for a walk in the park." -a english_audio.mp3 -l English
+# Automatic processing flow: video → audio → timestamps → subtitles
 ```
 
-### 2. Language Learning Materials
+### Batch Processing Example
 
-```bash
-# Japanese text
-uv run text2srt.py -t japanese.txt -a japanese_audio.mp3 -l Japanese
+```python
+import os
+from pathlib import Path
 
-# Chinese text
-uv run text2srt.py -t chinese.txt -a chinese_audio.mp3 -l Chinese
+# Batch process all audio files in directory
+audio_dir = Path("audio_files")
+text_dir = Path("text_files")
 
-# English text
-uv run text2srt.py -t english.txt -a english_audio.mp3 -l English
+for audio_file in audio_dir.glob("*.mp3"):
+    # Corresponding text file
+    text_file = text_dir / f"{audio_file.stem}.txt"
+  
+    if text_file.exists():
+        result = processor.process_media_file(
+            media_path=str(audio_file),
+            text_input=str(text_file)
+        )
+        print(f"Processing completed: {audio_file.name}")
 ```
-
-### 3. Batch Processing
-
-```bash
-# Create batch processing script
-for audio in *.mp3; do
-  text_file="${audio%.mp3}.txt"
-  if [ -f "$text_file" ]; then
-    uv run text2srt.py -t "$text_file" -a "$audio" -y
-  fi
-done
-```
-
-## 🏃 Running Examples
-
-```bash
-# Run Python examples
-uv run text2srt.py
-
-# View CLI help
-uv run text2srt.py --help
-
-# Quick test
-uv run text2srt.py -t "Test text" -a 1-1.mp3 -y
-```
-
-## 📊 Output Format
-
-### JSON Result Format
-
-```json
-{
-  "segments": [
-    {
-      "text": "Text content",
-      "start_time": 0.96,
-      "end_time": 7.84,
-      "words": [...],
-      "match_score": 1.0
-    }
-  ],
-  "statistics": {
-    "total_segments": 10,
-    "total_words": 151,
-    "matched_segments": 10
-  },
-  "output_files": {
-    "json": "1-1.json",
-    "word_srt": "1-1_word.srt",
-    "sentence_srt": "1-1_sentence.srt"
-  }
-}
-```
-
-### SRT Format
-
-- **Word-level SRT**: One timestamp per word, suitable for precise analysis
-- **Sentence-level SRT**: One timestamp per sentence, suitable for regular subtitles
-
-## ⚙️ Dependencies
-
-- Python 3.8+
-- PyTorch
-- qwen-asr
-- CUDA-supported GPU or CPU
 
 ## ⚠️ Important Notes
 
-1. **File Encoding**: Please use UTF-8 encoding for text files
-2. **Audio Format**: Supports common audio formats (mp3, wav, m4a, etc.)
-3. **Audio Matching**: Audio and text content need to match
-4. **GPU Requirement**: CUDA-supported GPU is recommended, CPU is also supported
-5. **File Naming**: Output files are automatically generated, avoid naming conflicts
+1. **Model Path**: Qwen\Qwen3-ForcedAligner-0.6B
+2. **GPU Support**: Auto-detect CUDA, automatically use when GPU available
+3. **Audio Quality**: Recommend clear audio without background noise or video
+4. **Text Matching**: Text content should match audio content for best results
+5. **FFmpeg Path**: Ensure FFmpeg is in system PATH (required for video processing)
 
-## 🎯 Application Scenarios
+## 📜 License
 
-- **Video Subtitle Production** - Quickly generate accurately time-aligned subtitles
-- **Language Learning** - Create timestamped learning materials
-- **Speech Recognition Verification** - Verify ASR result accuracy
-- **Content Analysis** - Fine-grained analysis of speech content
-- **Podcast Transcription** - Create subtitles and indexes for podcasts
+MIT License
 
-## 🔧 Troubleshooting
+## 🔗 Related Links
 
-### Common Issues
-
-1. **Model Loading Failed**
-
-   ```
-   [ERROR] Cannot load model
-   ```
-
-   Solution: Check CUDA and GPU memory
-2. **Unsupported Audio File**
-
-   ```
-   [ERROR] Audio file does not exist
-   ```
-
-   Solution: Check file path and format
-3. **Text Reading Failed**
-
-   ```
-   [ERROR] Failed to read file
-   ```
-
-   Solution: Ensure text file uses UTF-8 encoding
-4. **Output Directory Permissions**
-
-   ```
-   [ERROR] Cannot create output directory
-   ```
-
-   Solution: Check directory permissions or choose another directory
-
-## 🤖 Open Source Projects
-
-### 1. Core Engine
-
-**Qwen3-ASR**: https://github.com/QwenLM/Qwen3-ASR
-
-- Audio-text forced alignment engine
-- Supports multiple language precise timestamp extraction
-- Provides high-quality word-level timestamp alignment
-
-### 2. Model Files
-
-**Qwen3-ForcedAligner-0.6B**: https://huggingface.co/Qwen/Qwen3-ForcedAligner-0.6B
-
-- High-performance forced alignment model
-- Supports Japanese, Chinese, English and multiple languages
-- Provides accurate word-level timestamp to second precision
-
-### 3. Model Ecosystem
-
-**Hugging Face Qwen**: https://huggingface.co/Qwen
-
-- Complete ecosystem of Qwen series models and resources
-- Provides model download, configuration and usage guides
-- Comprehensive model library and community support
-
-## ⚙️ Model Configuration
-
-The project uses the following model configuration:
-
-```json
-{
-  "model": "Qwen/Qwen3-ForcedAligner-0.6B",
-  "dtype": "bfloat16",
-  "device": "cuda:0"
-}
-```
-
-## 🏗️ Technical Architecture
-
-This project is built with Qwen3-ASR and Qwen3-ForcedAligner-0.6B:
-
-- **Architecture**: Transformer-based forced alignment
-- **Precision**: High-precision word-level timestamp alignment
-- **Language Support**: Japanese, Chinese, English and multiple languages
-- **Input Format**: Audio file + corresponding text
-- **Output Format**: Word-level/sentence-level timestamps + SRT subtitles
-
----
-
-This project provides a complete text timestamp processing solution, including easy-to-use CLI tools and flexible Python APIs, suitable for various subtitle production and audio processing scenarios. Based on the open-source Qwen3-ASR project and utilizing the excellent Qwen3-ForcedAligner-0.6B model, it provides high-quality text timestamp processing solutions supporting multiple languages.
+- 里官方开源项目             [Qwen3-ASR](https://github.com/QwenLM/Qwen3-ASR)
+- Model download (huggingface)[Qwen3-ForcedAligner](https://huggingface.co/Qwen/Qwen3-ForcedAligner-0.6B)
+- Model download (modelscope)[Qwen3-ForcedAligner](https://www.modelscope.cn/models/Qwen/Qwen3-ForcedAligner-0.6B)
+- [FFmpeg Official Website](https://ffmpeg.org/)
+- [PyTorch](https://pytorch.org/)
